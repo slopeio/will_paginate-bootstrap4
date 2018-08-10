@@ -74,6 +74,28 @@ module WillPaginate
         num = @collection.current_page < @collection.total_pages && @collection.current_page + 1
         previous_or_next_page num, @options[:next_label], 'next'
       end
+
+      def url(page)
+        @base_url_params ||= begin
+          url_params = merge_get_params(default_url_params)
+          url_params[:only_path] = true
+          merge_optional_params(url_params)
+        end
+
+        url_params = @base_url_params.dup
+        # Get the tab param and remove it from params
+        tab = url_params[:tab]
+        url_params.except!(:tab)
+        # Remove old page params
+        url_params.except!(*Rails.configuration.page_params)
+        # Remove ignored params
+        url_params.except!(*Rails.configuration.ignored_params)
+        add_current_page_param(url_params, page)
+
+        url = @template.url_for(url_params)
+        # Append #tab to the url, which is used to choose the active tab on page reload
+        "#{url}##{tab}"
+      end
     end
   end
 end
